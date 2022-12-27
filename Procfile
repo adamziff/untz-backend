@@ -1,0 +1,1 @@
+web: gunicorn backend:app --python-version 3.9
