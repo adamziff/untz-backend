@@ -3,18 +3,11 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 import os
 import numpy as np
-import timeit
 import pandas as pd
-from operator import itemgetter
-import time
 import datetime as dt
-import scipy.stats as stats
 from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
 import scipy.spatial.distance as dist
 import random
-import matplotlib.pyplot as plt
-from flask import jsonify
 
 os.environ['SPOTIPY_CLIENT_ID'] = '3191e7e8b04e46c1af64f49bcdd020be'
 os.environ['SPOTIPY_CLIENT_SECRET'] = '88dc925eff0d4006bb6d0b9b2401ac59'
