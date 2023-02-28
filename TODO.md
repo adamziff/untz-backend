@@ -1,4 +1,5 @@
 To do:
+- environment variables
 - add entropy parameter
 - implement dynamic weighting across playlist generation
 - get rid of unweighted features array

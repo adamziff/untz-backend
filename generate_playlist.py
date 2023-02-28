@@ -9,12 +9,12 @@ from operator import itemgetter
 import time
 import datetime as dt
 import scipy.stats as stats
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 import scipy.spatial.distance as dist
 import random
 import matplotlib.pyplot as plt
+from flask import jsonify
 
 os.environ['SPOTIPY_CLIENT_ID'] = '3191e7e8b04e46c1af64f49bcdd020be'
 os.environ['SPOTIPY_CLIENT_SECRET'] = '88dc925eff0d4006bb6d0b9b2401ac59'
@@ -185,11 +185,11 @@ def get_utilfuncs_and_allsongs(users_uris):
     names_list = []
 
     for i in range(n):
-        uf, wf, rec_uris, artists, names = get_features(users[i])
+        uf, wf, rec_uris, artists, names = get_features(users_uris[i])
 
         all_unweighted_features = pd.concat([all_unweighted_features, uf])
         all_weighted_features = pd.concat([all_weighted_features, wf])
-        all_uris_list.extend(users[i])
+        all_uris_list.extend(users_uris[i])
         all_uris_list.extend(rec_uris)
         artists_list.append(artists)
         names_list.append(names[:len(users_uris[i])])
@@ -374,7 +374,12 @@ def select_songs_sort(users_uris, energy_curve, weighted=True):
 
     return ordered_tracks
 
-def generate_playlist(users):
+NUM_RECOMMENDATIONS = 100
+ARTIST_PENALTY = 0.05
+CHOSEN_FEATURES_WEIGHT = 100
+NUM_SONGS_TO_SELECT = 30
+
+def get_playlist(users):
     energy_curve = [0.3, 0.6, 0.8, 0.5]
 
     # parameters
@@ -383,7 +388,8 @@ def generate_playlist(users):
     CHOSEN_FEATURES_WEIGHT = 100
     NUM_SONGS_TO_SELECT = 30
 
-    tracks, mm_dists, mm_users = select_songs_sort(users, energy_curve, weighted=True)
+    tracks = select_songs_sort(users, energy_curve, weighted=True)
     print(tracks['energy'])
     print_tracks(tracks['uri'])
     return tracks
+    # return jsonify({'tracks': tracks})
