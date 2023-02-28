@@ -4,4 +4,5 @@ gunicorn
 pandas
 spotipy
 scipy
+scikit-learn
 sklearn
