@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
 from generate_playlist import get_playlist
 import json
@@ -13,14 +13,31 @@ def get_data():
 
 @app.route('/api/generate-playlist', methods=['GET'])
 def generate_playlist():
-    # users = request.args.getlist('users')
-    # print('users:', users)
-    # print('request.args:', request.args)
-    # tracks = get_playlist(users)
-    # return jsonify({'tracks': tracks})
-
     users = request.args.get('users')
     users = json.loads(users)
     print('users:', users)
-    tracks = get_playlist(users)
-    return jsonify({'tracks': tracks.to_dict()})
+    try:
+        tracks = get_playlist(users)
+        response_data = {'tracks': tracks.to_dict()}
+        response = make_response(jsonify(response_data), 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    except Exception as e:
+        error_msg = f"An error occurred: {str(e)}"
+        response_data = {'error': error_msg}
+        response = make_response(jsonify(response_data), 500)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+# def generate_playlist():
+#     # users = request.args.getlist('users')
+#     # print('users:', users)
+#     # print('request.args:', request.args)
+#     # tracks = get_playlist(users)
+#     # return jsonify({'tracks': tracks})
+
+#     users = request.args.get('users')
+#     users = json.loads(users)
+#     print('users:', users)
+#     tracks = get_playlist(users)
+#     return jsonify({'tracks': tracks.to_dict()})
