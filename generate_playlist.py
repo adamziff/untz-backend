@@ -113,9 +113,14 @@ def get_values(uris):
 
     # Get audio features for user's recommended tracks from Spotify API
     recommendations_features = get_recommendations(uris)
+
+    # Remove None values from both dataframes
+    chosen_features = list(filter(lambda x: x is not None, chosen_features))
+    recommendations_features = list(filter(lambda x: x is not None, recommendations_features))
     
     # Create unweighted list of all features
     unweighted_features = pd.DataFrame(chosen_features + recommendations_features)
+
     unweighted_features = unweighted_features.drop(['key', 'loudness', 'mode', 'type', 'id', 'uri', 'track_href', 'analysis_url', 'duration_ms', 'time_signature'], axis=1)
 
     # Create weighted list of all features favoring chosen features

@@ -1,4 +1,5 @@
 To do:
+- deal with None values - for some reason, some songs return None when you get their audio features
 - environment variables
 - add entropy parameter
 - implement dynamic weighting across playlist generation
