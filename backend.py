@@ -4,8 +4,11 @@ from generate_playlist import get_playlist
 import json
 
 app = Flask(__name__)
-# CORS(app, origins=['https://untzdj.azurewebsites.net/', 'http://localhost:3000'])
-CORS(app)
+CORS(app, origins=['www.untz.studio',
+                    'untz-vivid.vercel.app',
+                    'untz-vivid-adamziff.vercel.app', 
+                    'http://localhost:3000'])
+# CORS(app)
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
