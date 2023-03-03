@@ -5,5 +5,4 @@ pandas
 spotipy
 scipy
 scikit-learn
-sklearn
 python-dotenv
