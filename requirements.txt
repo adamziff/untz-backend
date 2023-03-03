@@ -6,3 +6,4 @@ spotipy
 scipy
 scikit-learn
 sklearn
+dotenv

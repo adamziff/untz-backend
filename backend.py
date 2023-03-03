@@ -19,11 +19,16 @@ def generate_playlist():
     users = request.args.get('users')
     users = json.loads(users)
     print('users:', users)
+    energy_curve = request.args.get('energy_curve')
+    energy_curve = json.loads(energy_curve)
+    print('energy_curve:', energy_curve)
     try:
-        tracks = get_playlist(users)
-        response_data = {'tracks': tracks.to_dict()}
+        tracks = get_playlist(users, energy_curve)
+        response_data = {'tracks': tracks}
         response = make_response(jsonify(response_data), 200)
         response.headers['Content-Type'] = 'application/json'
+
+        # add playlist to spotify
         return response
     except Exception as e:
         error_msg = f"An error occurred: {str(e)}"
