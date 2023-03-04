@@ -365,7 +365,7 @@ def select_songs_sort(users_uris, energy_curve, params):
 # NUM_SONGS_TO_SELECT = 30
 # energy_curve = [0.3, 0.6, 0.8, 0.5]
 
-def get_playlist(users, energy_curve, NUM_RECOMMENDATIONS = 100, ARTIST_PENALTY = 0.05, CHOSEN_FEATURES_WEIGHT = 100, NUM_SONGS_TO_SELECT = 30):
+def get_playlist(users, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT):
     params = {
         'NUM_RECOMMENDATIONS': NUM_RECOMMENDATIONS,
         'ARTIST_PENALTY': ARTIST_PENALTY,

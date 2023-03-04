@@ -22,6 +22,25 @@ def generate_playlist():
     energy_curve = request.args.get('energy_curve')
     energy_curve = json.loads(energy_curve)
     print('energy_curve:', energy_curve)
+    # NUM_RECOMMENDATIONS = 100, ARTIST_PENALTY = 0.05, CHOSEN_FEATURES_WEIGHT = 100, NUM_SONGS_TO_SELECT = 30
+    if request.args.get('chaos') is not None:
+        NUM_RECOMMENDATIONS = request.args.get('chaos')
+    else:
+        NUM_RECOMMENDATIONS = 100
+    if request.args.get('artist_penalty') is not None:
+        ARTIST_PENALTY = request.args.get('artist_penalty')
+    else:
+        ARTIST_PENALTY = 0.05
+    if request.args.get('chosen_features_weight') is not None:
+        CHOSEN_FEATURES_WEIGHT = request.args.get('chosen_features_weight')
+    else:
+        CHOSEN_FEATURES_WEIGHT = 100
+    if request.args.get('num_songs_to_select') is not None:
+        NUM_SONGS_TO_SELECT = request.args.get('num_songs_to_select')
+    else:
+        NUM_SONGS_TO_SELECT = 30
+    
+
     try:
         tracks = get_playlist(users, energy_curve)
         response_data = {'tracks': tracks}
