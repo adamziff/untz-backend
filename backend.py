@@ -24,19 +24,19 @@ def generate_playlist():
     print('energy_curve:', energy_curve)
 
     if request.args.get('chaos') is not None:
-        NUM_RECOMMENDATIONS = request.args.get('chaos')
+        NUM_RECOMMENDATIONS = int(request.args.get('chaos'))
     else:
         NUM_RECOMMENDATIONS = 100
     if request.args.get('artist_penalty') is not None:
-        ARTIST_PENALTY = request.args.get('artist_penalty')
+        ARTIST_PENALTY = int(request.args.get('artist_penalty'))
     else:
         ARTIST_PENALTY = 0.05
     if request.args.get('chosen_features_weight') is not None:
-        CHOSEN_FEATURES_WEIGHT = request.args.get('chosen_features_weight')
+        CHOSEN_FEATURES_WEIGHT = int(request.args.get('chosen_features_weight'))
     else:
         CHOSEN_FEATURES_WEIGHT = 100
     if request.args.get('num_songs_to_select') is not None:
-        NUM_SONGS_TO_SELECT = request.args.get('num_songs_to_select')
+        NUM_SONGS_TO_SELECT = int(request.args.get('num_songs_to_select'))
     else:
         NUM_SONGS_TO_SELECT = 30
     
