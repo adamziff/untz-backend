@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
 import scipy.spatial.distance as dist
 import random
 from dotenv import load_dotenv
@@ -15,7 +16,6 @@ load_dotenv()
 
 id = os.environ.get('SPOTIPY_CLIENT_ID')
 secret = os.environ.get('SPOTIPY_CLIENT_SECRET')
-# print(id)
 
 auth_manager = SpotifyClientCredentials(client_id=id, client_secret=secret)
 sp = spotipy.Spotify(auth_manager=auth_manager)
@@ -51,13 +51,25 @@ def print_tracks(uris):
                 chosen_artists_string += ', '
         print(chosen_tracks_names[i] + ' by ' + chosen_artists_string)
 
-# Scale features to range of [-1,1]
-def scale_features(features, cols):
-    scaler = StandardScaler()
-    scaler.fit(features)
-    scaled_features = pd.DataFrame(scaler.transform(features))
-    scaled_features.columns = cols
-    return scaled_features, scaler
+# Scale features to mean 0 and stddev 1
+def scale_features(features):
+    cols_to_scale = features.drop('uri', axis=1).columns
+    # create a ColumnTransformer to apply the scaler to the selected columns only
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', StandardScaler(), cols_to_scale)
+        ],
+        remainder='passthrough'  # include the excluded columns in the output without transforming them
+    )
+    scaled_features = pd.DataFrame(preprocessor.fit_transform(features))
+
+    # reorder columns in the scaled_features dataframe
+    columns_list = list(features.columns)
+    columns_list.remove('uri')
+    columns_list.append('uri')
+    scaled_features.columns = columns_list
+
+    return scaled_features
 
 # Get recommendations from Spotify API
 def get_recommendations(uris, params):
@@ -126,15 +138,17 @@ def get_values(uris, params):
     # Create unweighted list of all features
     unweighted_features = pd.DataFrame(chosen_features + recommendations_features)
 
-    unweighted_features = unweighted_features.drop(['key', 'loudness', 'mode', 'type', 'id', 'uri', 'track_href', 'analysis_url', 'duration_ms', 'time_signature'], axis=1)
+    # unweighted_features = unweighted_features.drop(['key', 'loudness', 'mode', 'type', 'id', 'uri', 'track_href', 'analysis_url', 'duration_ms', 'time_signature'], axis=1)
+    unweighted_features = unweighted_features.drop(['key', 'loudness', 'mode', 'type', 'id', 'track_href', 'analysis_url', 'duration_ms', 'time_signature'], axis=1)
 
     # Create weighted list of all features favoring chosen features
     weighted_features = pd.DataFrame(chosen_features * params['CHOSEN_FEATURES_WEIGHT'] + recommendations_features)
     weighted_features = weighted_features.drop(['key', 'loudness', 'mode', 'type', 'id', 'uri', 'track_href', 'analysis_url', 'duration_ms', 'time_signature'], axis=1)
 
-    recommendations_uris = pd.DataFrame(recommendations_features)['uri']
+    # recommendations_uris = pd.DataFrame(recommendations_features)['uri']
 
-    return unweighted_features, weighted_features, recommendations_uris
+    # return unweighted_features, weighted_features, recommendations_uris
+    return unweighted_features, weighted_features
 
 # Evaluate using cosine distance
 def evaluate(uri, user_avg, eval_artists, scale_mean, scale_var, params):
@@ -159,8 +173,9 @@ def evaluate(uri, user_avg, eval_artists, scale_mean, scale_var, params):
 # get all features
 def get_features(uris, params):
     n = len(uris)
-    uf, wf, rec_uris = get_values(uris, params)
-    artists, popularity, dates, names = get_track_values(uris + list(rec_uris))
+    uf, wf = get_values(uris, params)
+    artists, popularity, dates, names = get_track_values(list(uf['uri']))
+    # artists, popularity, dates, names = get_track_values(uris + list(rec_uris))
     # rec_uris_list = rec_uris_list.append(rec_uris)
 
     # add to uf
@@ -171,7 +186,8 @@ def get_features(uris, params):
     wf['popularity'] = (popularity[:n] * params['CHOSEN_FEATURES_WEIGHT']) + popularity[n:]
     wf['date'] = (dates[:n] * params['CHOSEN_FEATURES_WEIGHT']) + dates[n:]
     
-    return uf, wf, rec_uris, artists, names
+    return uf, wf, artists, names
+    # return uf, wf, rec_uris, artists, names
 
 # set up utility function for each user
 # take the average over all user's features then calculate distance to that
@@ -182,21 +198,22 @@ def get_utilfuncs_and_allsongs(users_uris, params):
 
     n = len(users_uris)
 
-    all_uris_list = []
+    # all_uris_list = []
     artists_list = []
     names_list = []
 
     for i in range(n):
-        uf, wf, rec_uris, artists, names = get_features(users_uris[i], params)
+        uf, wf, artists, names = get_features(users_uris[i], params)
+        # uf, wf, rec_uris, artists, names = get_features(users_uris[i], params)
 
         all_unweighted_features = pd.concat([all_unweighted_features, uf])
         all_weighted_features = pd.concat([all_weighted_features, wf])
-        all_uris_list.extend(users_uris[i])
-        all_uris_list.extend(rec_uris)
+        # all_uris_list.extend(users_uris[i])
+        # all_uris_list.extend(rec_uris)
         artists_list.append(artists)
         names_list.append(names[:len(users_uris[i])])
 
-    all_unweighted_features, _ = scale_features(all_unweighted_features, all_unweighted_features.columns) 
+    all_unweighted_features = scale_features(all_unweighted_features) 
 
     w_start_index = 0
     w_user_avgs = []
@@ -212,7 +229,8 @@ def get_utilfuncs_and_allsongs(users_uris, params):
         # take the average of uf and wf, add to array of average vectors
         w_user_avgs.append(np.mean(wf, axis=0))
     
-    return w_user_avgs, all_unweighted_features, np.array(all_uris_list)
+    return w_user_avgs, all_unweighted_features
+    # return w_user_avgs, all_unweighted_features, np.array(all_uris_list)
 
 # Calculate the distance from every average to every song
 def calculate_distances(avgs, songs):
@@ -232,12 +250,19 @@ def sigmoid(x, beta):
     return s
 
 # Sort selected tracks by energy
-def sort_by_energy(features, uris, energy_curve):
-    sorted_features = features.sort_values(by='energy')
-    sorted_features['uri'] = uris
+def sort_by_energy(features, energy_curve, must_plays_features):
+    # add must plays uris back to uris list
+    # uris = np.concatenate((uris, must_plays_uris))
 
-    songs_per_iter = int(len(uris) / len(energy_curve))
-    remainder = len(uris) % len(energy_curve)
+    # add must plays features back to features list
+    features = pd.concat([features, must_plays_features], ignore_index=True)
+    # uris = features['uri'].tolist()
+
+    sorted_features = features.sort_values(by='energy')
+    # sorted_features['uri'] = uris
+
+    songs_per_iter = int(len(features) / len(energy_curve))
+    remainder = len(features) % len(energy_curve)
 
     argsort_energy = np.argsort(energy_curve)
 
@@ -268,18 +293,30 @@ def sort_by_energy(features, uris, energy_curve):
 # SORT! min dist indices
 # currently using weighted as default
 def select_songs_sort(users_uris, energy_curve, params):
-    avgs, all_features, all_uris_list = get_utilfuncs_and_allsongs(users_uris, params)
+    avgs, all_features = get_utilfuncs_and_allsongs(users_uris, params)
+    # avgs, all_features, all_uris_list = get_utilfuncs_and_allsongs(users_uris, params)
+    # all_uris_list = np.array(list(dict.fromkeys(all_uris_list)))
+    # all_features['uri'] = all_uris_list
     all_features = all_features.drop_duplicates()
-    all_uris_list = np.array(list(dict.fromkeys(all_uris_list)))
 
-    all_dists = calculate_distances(avgs, all_features)
+    # remove and save must plays features
+    # Create a boolean mask to filter rows that match must_plays
+    must_plays_mask = all_features['uri'].isin(params['must_plays'])
+    # Create a new DataFrame with rows that match must_plays
+    must_plays_features = all_features[must_plays_mask]
+    # Remove rows that match must_plays from all_features
+    all_features = all_features[~must_plays_mask]
+
+    # remove do not plays features
+    # Create a boolean mask to filter rows that match do_not_plays
+    do_not_plays_mask = all_features['uri'].isin(params['do_not_plays'])
+    # Remove rows that match do_not_plays from all_features
+    all_features = all_features[~do_not_plays_mask]
+
+    all_dists = calculate_distances(avgs, all_features.drop(columns=['uri']))
     indices_sorted_by_min_dist = np.argsort(all_dists, axis=0)
-    # use these sorted indices to choose songs (both add and remove)
-    # use all_dists to sum distances so i don't have to recalculate them
 
     n = len(all_features)
-    # needs to adjust dynamically to length
-    # NUM_SONGS_TO_SELECT = 10
 
     # start with random set of songs - selected array is indices of selected songs
     selected_ind = random.sample(range(n), params['NUM_SONGS_TO_SELECT'])
@@ -350,7 +387,7 @@ def select_songs_sort(users_uris, energy_curve, params):
             done = True
         t += 1
 
-    ordered_tracks = sort_by_energy(all_features.iloc[selected_ind], all_uris_list[selected_ind], energy_curve)
+    ordered_tracks = sort_by_energy(all_features.iloc[selected_ind], energy_curve, must_plays_features)
     # scale these columns back to [0, 1]
     columns_to_scale = ['danceability', 'energy', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence']
     for col in columns_to_scale:
@@ -365,15 +402,27 @@ def select_songs_sort(users_uris, energy_curve, params):
 # NUM_SONGS_TO_SELECT = 30
 # energy_curve = [0.3, 0.6, 0.8, 0.5]
 
-def get_playlist(users, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT):
+def get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT):
     params = {
         'NUM_RECOMMENDATIONS': NUM_RECOMMENDATIONS,
         'ARTIST_PENALTY': ARTIST_PENALTY,
         'CHOSEN_FEATURES_WEIGHT': CHOSEN_FEATURES_WEIGHT,
         'NUM_SONGS_TO_SELECT': NUM_SONGS_TO_SELECT,
         'energy_curve': energy_curve,
+        'must_plays': must_plays,
+        'do_not_plays': do_not_plays
         
     }
+
+    # Split must_plays into sub-lists of length 5
+    sub_lists = [must_plays[i:i+5] for i in range(0, len(must_plays), 5)]
+
+    # Add each sub-list to the 2D list
+    for sub_list in sub_lists:
+        users.append(sub_list)
+
+    print('users w/ must plays')
+    print(users)
 
     tracks = select_songs_sort(users, energy_curve, params)
     print(tracks['energy'])
