@@ -38,31 +38,49 @@ def generate_playlist():
         do_not_plays = []
     if request.args.get('chaos') is not None:
         NUM_RECOMMENDATIONS = int(request.args.get('chaos'))
+        CHOSEN_FEATURES_WEIGHT = 101-int(request.args.get('chaos'))
     else:
         NUM_RECOMMENDATIONS = 100
+        CHOSEN_FEATURES_WEIGHT = 100
     if request.args.get('artist_penalty') is not None:
         ARTIST_PENALTY = int(request.args.get('artist_penalty'))
     else:
         ARTIST_PENALTY = 0.05
-    if request.args.get('chosen_features_weight') is not None:
-        CHOSEN_FEATURES_WEIGHT = int(request.args.get('chosen_features_weight'))
-    else:
-        CHOSEN_FEATURES_WEIGHT = 100
     if request.args.get('num_songs_to_select') is not None:
         NUM_SONGS_TO_SELECT = int(request.args.get('num_songs_to_select')) - len(must_plays)
     else:
         NUM_SONGS_TO_SELECT = 30
+
+    while NUM_RECOMMENDATIONS * len(users) <= NUM_SONGS_TO_SELECT and NUM_RECOMMENDATIONS < 100:
+        NUM_RECOMMENDATIONS += 1
     
-    
-    try:
-        tracks = get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT)
-        response_data = {'tracks': tracks}
-        response = make_response(jsonify(response_data), 200)
-        response.headers['Content-Type'] = 'application/json'
-        return response
-    except Exception as e:
-        error_msg = f"An error occurred: {str(e)}"
-        response_data = {'error': error_msg}
-        response = make_response(jsonify(response_data), 500)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+    while True:
+        try:
+            tracks = get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT)
+            response_data = {'tracks': tracks}
+            response = make_response(jsonify(response_data), 200)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+        except Exception as e:
+            if hasattr(e, 'response') and e.response.status_code == 443:
+                # The Spotify API timed out, retrying...
+                print('The Spotify API timed out, retrying...')
+                continue
+            else:
+                error_msg = f"An error occurred: {str(e)}"
+                response_data = {'error': error_msg}
+                response = make_response(jsonify(response_data), 500)
+                response.headers['Content-Type'] = 'application/json'
+                return response
+    # try:
+    #     tracks = get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT)
+    #     response_data = {'tracks': tracks}
+    #     response = make_response(jsonify(response_data), 200)
+    #     response.headers['Content-Type'] = 'application/json'
+    #     return response
+    # except Exception as e:
+    #     error_msg = f"An error occurred: {str(e)}"
+    #     response_data = {'error': error_msg}
+    #     response = make_response(jsonify(response_data), 500)
+    #     response.headers['Content-Type'] = 'application/json'
+    #     return response
