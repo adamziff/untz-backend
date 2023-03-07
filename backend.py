@@ -5,11 +5,14 @@ import json
 import numpy as np
 
 app = Flask(__name__)
-CORS(app, origins=['www.untz.studio',
-                    'untz-vivid.vercel.app',
-                    'untz-vivid-adamziff.vercel.app', 
-                    'http://localhost:3000'])
+cors_origins = ['www.untz.studio',
+                'https://www.untz.studio',
+                'https://untz-vivid.vercel.app',
+                'https://untz-vivid-adamziff.vercel.app', 
+                'http://localhost:3000']
+CORS(app, resources={r"/*": {"origins": cors_origins, "methods": ["GET", "POST", "OPTIONS"]}})
 # CORS(app)
+# app.config['CORS_HEADERS'] = 'Content-Type'
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
