@@ -388,11 +388,6 @@ def select_songs_sort(users_uris, energy_curve, params):
         t += 1
 
     ordered_tracks = sort_by_energy(all_features.iloc[selected_ind], energy_curve, must_plays_features)
-    # scale these columns back to [0, 1]
-    columns_to_scale = ['danceability', 'energy', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence']
-    for col in columns_to_scale:
-        ordered_tracks[col] += abs(min(ordered_tracks[col]))
-        ordered_tracks[col] /= max(ordered_tracks[col])
 
     return ordered_tracks
 
@@ -421,11 +416,6 @@ def get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATI
     for sub_list in sub_lists:
         users.append(sub_list)
 
-    print('users w/ must plays')
-    print(users)
-
     tracks = select_songs_sort(users, energy_curve, params)
-    print(tracks['energy'])
-    print_tracks(tracks['uri'])
     return tracks['uri'].to_list()
     # return jsonify({'tracks': tracks})

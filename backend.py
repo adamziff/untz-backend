@@ -22,6 +22,13 @@ def get_data():
 def generate_playlist():
     users = request.args.get('users')
     users = json.loads(users)
+
+    # Iterate through the 2D array and ensure each string begins with "spotify:track:"
+    for user in users:
+        for i in range(len(user)):
+            if not user[i].startswith("spotify:track:"):
+                user[i] = "spotify:track:" + user[i]
+
     energy_curve = request.args.get('energy_curve')
     energy_curve = json.loads(energy_curve)
     print('energy_curve:', energy_curve)
@@ -29,11 +36,20 @@ def generate_playlist():
     if request.args.get('must_plays') is not None:
         must_plays = request.args.get('must_plays')
         must_plays = json.loads(must_plays)
+        # Iterate through the array and ensure each string begins with "spotify:track:"
+        for i in range(len(must_plays)):
+            if not must_plays[i].startswith("spotify:track:"):
+                must_plays[i] = "spotify:track:" + must_plays[i]
     else:
         must_plays = []
     if request.args.get('do_not_plays') is not None:
         do_not_plays = request.args.get('do_not_plays')
+        # do_not_plays = do_not_plays.replace("%27", "%22") # Replace single quotes with double quotes
         do_not_plays = json.loads(do_not_plays)
+        # Iterate through the array and ensure each string begins with "spotify:track:"
+        for i in range(len(do_not_plays)):
+            if not do_not_plays[i].startswith("spotify:track:"):
+                do_not_plays[i] = "spotify:track:" + do_not_plays[i]
     else:
         do_not_plays = []
     if request.args.get('chaos') is not None:
@@ -57,6 +73,15 @@ def generate_playlist():
     while True:
         try:
             tracks = get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT)
+            not_found = set(must_plays) - set(tracks)
+
+            if not_found:
+                print("The following songs were not found in the tracks list:")
+                for song in not_found:
+                    print(song)
+            else:
+                print("All songs in must_plays were found in the tracks list.")
+
             response_data = {'tracks': tracks}
             response = make_response(jsonify(response_data), 200)
             response.headers['Content-Type'] = 'application/json'
@@ -72,15 +97,4 @@ def generate_playlist():
                 response = make_response(jsonify(response_data), 500)
                 response.headers['Content-Type'] = 'application/json'
                 return response
-    # try:
-    #     tracks = get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT)
-    #     response_data = {'tracks': tracks}
-    #     response = make_response(jsonify(response_data), 200)
-    #     response.headers['Content-Type'] = 'application/json'
-    #     return response
-    # except Exception as e:
-    #     error_msg = f"An error occurred: {str(e)}"
-    #     response_data = {'error': error_msg}
-    #     response = make_response(jsonify(response_data), 500)
-    #     response.headers['Content-Type'] = 'application/json'
-    #     return response
+            
