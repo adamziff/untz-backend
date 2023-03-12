@@ -21,6 +21,9 @@ auth_manager = SpotifyClientCredentials(client_id=id, client_secret=secret)
 sp = spotipy.Spotify(auth_manager=auth_manager)
 
 def print_tracks(uris):
+    if len(uris) == 0:
+        print('print_tracks - len uris is 0')
+        return
     #recurse through all uris
     if len(uris) > 50:
         num_sets = int(len(uris)/50)
@@ -123,6 +126,7 @@ def get_track_values(uris):
 
 # Get audio features and recommended tracks URIs
 def get_values(uris, params):
+    print(uris)
     assert(len(uris) <= 5)
 
     # Get audio features for user's chosen tracks from Spotify API
