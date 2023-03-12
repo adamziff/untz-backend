@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
-from generate_playlist import get_playlist
+from generate_playlist import get_playlist, print_tracks
 import json
 import numpy as np
 
@@ -74,6 +74,11 @@ def generate_playlist():
         try:
             tracks = get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT)
             not_found = set(must_plays) - set(tracks)
+
+            print_tracks(tracks)
+            print()
+            print_tracks(must_plays)
+            print()
 
             if not_found:
                 print("The following songs were not found in the tracks list:")
