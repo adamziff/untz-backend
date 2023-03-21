@@ -11,8 +11,16 @@ cors_origins = ['www.untz.studio',
                 'https://untz-vivid-adamziff.vercel.app', 
                 'http://localhost:3000']
 CORS(app, resources={r"/*": {"origins": cors_origins, "methods": ["GET", "POST", "OPTIONS"]}})
-# CORS(app)
-# app.config['CORS_HEADERS'] = 'Content-Type'
+
+@app.after_request
+def add_cors_headers(response):
+    origin = request.headers.get('Origin')
+    if origin in cors_origins:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
@@ -75,11 +83,6 @@ def generate_playlist():
             tracks = get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT)
             not_found = set(must_plays) - set(tracks)
 
-            print_tracks(tracks)
-            print()
-            print_tracks(must_plays)
-            print()
-
             if not_found:
                 print("The following songs were not found in the tracks list:")
                 for song in not_found:
@@ -91,6 +94,7 @@ def generate_playlist():
             response = make_response(jsonify(response_data), 200)
             response.headers['Content-Type'] = 'application/json'
             return response
+
         except Exception as e:
             if hasattr(e, 'response') and e.response.status_code == 443:
                 # The Spotify API timed out, retrying...
