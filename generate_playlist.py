@@ -126,14 +126,19 @@ def get_track_values(uris):
 
 # Get audio features and recommended tracks URIs
 def get_values(uris, params):
+    print('starting get values, uris:')
     print(uris)
     assert(len(uris) <= 5)
 
     # Get audio features for user's chosen tracks from Spotify API
+    print('calling sp.audio_features in get_values')
     chosen_features = sp.audio_features(uris)
+    print('sp.audio_features in get_values returned')
 
     # Get audio features for user's recommended tracks from Spotify API
+    print('calling get_recommendations')
     recommendations_features = get_recommendations(uris, params)
+    print('get_recommendations returned')
 
     # Remove None values from both dataframes
     chosen_features = list(filter(lambda x: x is not None, chosen_features))
@@ -152,6 +157,7 @@ def get_values(uris, params):
     # recommendations_uris = pd.DataFrame(recommendations_features)['uri']
 
     # return unweighted_features, weighted_features, recommendations_uris
+    print('get_values done')
     return unweighted_features, weighted_features
 
 # Evaluate using cosine distance
@@ -177,7 +183,9 @@ def evaluate(uri, user_avg, eval_artists, scale_mean, scale_var, params):
 # get all features
 def get_features(uris, params):
     n = len(uris)
+    print('getting values')
     uf, wf = get_values(uris, params)
+    print('done getting values, getting track values')
     artists, popularity, dates, names = get_track_values(list(uf['uri']))
     # artists, popularity, dates, names = get_track_values(uris + list(rec_uris))
     # rec_uris_list = rec_uris_list.append(rec_uris)
@@ -189,6 +197,7 @@ def get_features(uris, params):
     # add to wf in a weighted way
     wf['popularity'] = (popularity[:n] * params['CHOSEN_FEATURES_WEIGHT']) + popularity[n:]
     wf['date'] = (dates[:n] * params['CHOSEN_FEATURES_WEIGHT']) + dates[n:]
+    print('done getting track values, done with get_features')
     
     return uf, wf, artists, names
     # return uf, wf, rec_uris, artists, names
@@ -206,6 +215,7 @@ def get_utilfuncs_and_allsongs(users_uris, params):
     artists_list = []
     names_list = []
 
+    print('getting all features')
     for i in range(n):
         uf, wf, artists, names = get_features(users_uris[i], params)
         # uf, wf, rec_uris, artists, names = get_features(users_uris[i], params)
@@ -217,7 +227,9 @@ def get_utilfuncs_and_allsongs(users_uris, params):
         artists_list.append(artists)
         names_list.append(names[:len(users_uris[i])])
 
+    print('done getting features, now scaling features')
     all_unweighted_features = scale_features(all_unweighted_features) 
+    print('done scaling features, now creating w_user_avgs')
 
     w_start_index = 0
     w_user_avgs = []
@@ -232,6 +244,7 @@ def get_utilfuncs_and_allsongs(users_uris, params):
 
         # take the average of uf and wf, add to array of average vectors
         w_user_avgs.append(np.mean(wf, axis=0))
+    print('done creating w_user_avgs, done with get_utilfuncs_and_allsongs')
     
     return w_user_avgs, all_unweighted_features
     # return w_user_avgs, all_unweighted_features, np.array(all_uris_list)
@@ -297,7 +310,9 @@ def sort_by_energy(features, energy_curve, must_plays_features):
 # SORT! min dist indices
 # currently using weighted as default
 def select_songs_sort(users_uris, energy_curve, params):
+    print('calling get_utilfuncs_and_allsongs')
     avgs, all_features = get_utilfuncs_and_allsongs(users_uris, params)
+    print('get_utilfuncs_and_allsongs returned, selecting songs')
     # avgs, all_features, all_uris_list = get_utilfuncs_and_allsongs(users_uris, params)
     # all_uris_list = np.array(list(dict.fromkeys(all_uris_list)))
     # all_features['uri'] = all_uris_list
@@ -391,7 +406,9 @@ def select_songs_sort(users_uris, energy_curve, params):
             done = True
         t += 1
 
+    print('songs selected, now sorting songs')
     ordered_tracks = sort_by_energy(all_features.iloc[selected_ind], energy_curve, must_plays_features)
+    print('sort finished')
 
     return ordered_tracks
 
@@ -420,6 +437,7 @@ def get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATI
     for sub_list in sub_lists:
         users.append(sub_list)
 
+    print('calling select_songs_sort')
     tracks = select_songs_sort(users, energy_curve, params)
     return tracks['uri'].to_list()
     # return jsonify({'tracks': tracks})

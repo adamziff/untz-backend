@@ -28,8 +28,12 @@ def get_data():
 
 @app.route('/api/generate-playlist', methods=['GET'])
 def generate_playlist():
+    print('generate playlist called')
     users = request.args.get('users')
     users = json.loads(users)
+    print('users')
+    print(users)
+    print()
 
     # Iterate through the 2D array and ensure each string begins with "spotify:track:"
     for user in users:
@@ -77,10 +81,15 @@ def generate_playlist():
 
     while NUM_RECOMMENDATIONS * len(users) <= NUM_SONGS_TO_SELECT and NUM_RECOMMENDATIONS < 100:
         NUM_RECOMMENDATIONS += 1
+
+    print('parameters set')
     
     while True:
         try:
+            print('calling get_playlist')
             tracks = get_playlist(users, must_plays, do_not_plays, energy_curve, NUM_RECOMMENDATIONS, ARTIST_PENALTY, CHOSEN_FEATURES_WEIGHT, NUM_SONGS_TO_SELECT)
+            print('get_playlist returned, tracks:')
+            print(tracks)
             not_found = set(must_plays) - set(tracks)
 
             if not_found:
@@ -96,7 +105,7 @@ def generate_playlist():
             return response
 
         except Exception as e:
-            if hasattr(e, 'response') and e.response.status_code == 443:
+            if e.response and e.response.status_code and hasattr(e, 'response') and e.response.status_code == 443:
                 # The Spotify API timed out, retrying...
                 print('The Spotify API timed out, retrying...')
                 continue
