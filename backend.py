@@ -107,7 +107,7 @@ def generate_playlist():
         except Exception as e:
             print('e')
             print(e)
-            if (e.response and e.response.status_code and hasattr(e, 'response') and e.response.status_code == 443) or e.port == 443:
+            if hasattr(e, 'response') and hasattr(e.response, 'status_code') and e.response.status_code == 443:
                 # The Spotify API timed out, retrying...
                 print('The Spotify API timed out, retrying...')
                 continue
