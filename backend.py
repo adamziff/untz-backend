@@ -2,7 +2,8 @@ from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
 from generate_playlist import get_playlist, print_tracks
 import json
-import numpy as np
+from pymongo import MongoClient, errors as pymongo_errors
+import os
 
 app = Flask(__name__)
 cors_origins = ['www.untz.studio',
@@ -12,6 +13,8 @@ cors_origins = ['www.untz.studio',
                 'http://localhost:3000']
 CORS(app, resources={r"/*": {"origins": cors_origins, "methods": ["GET", "POST", "OPTIONS"]}})
 
+mongodb_uri = os.environ.get('MONGODB_URI')
+
 @app.after_request
 def add_cors_headers(response):
     origin = request.headers.get('Origin')
@@ -20,6 +23,7 @@ def add_cors_headers(response):
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
         response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Vary', 'Origin')
     return response
 
 @app.route('/api/data', methods=['GET'])
@@ -29,11 +33,25 @@ def get_data():
 @app.route('/api/generate-playlist', methods=['GET'])
 def generate_playlist():
     print('generate playlist called')
-    users = request.args.get('users')
-    users = json.loads(users)
-    print('users')
-    print(users)
+    access_code = request.args.get('accessCode')
+    # access_code = json.loads(access_code)
+
+    client = MongoClient(mongodb_uri)
+    db = client["untz-db"]
+    parties_collection = db["parties"]
+    party = parties_collection.find_one({"access_code": access_code})
+    print('party')
+    print(party)
     print()
+    print(party['name'])
+    print()
+
+    duration = party['duration']
+    energy_curve = party['energy_curve']
+    chaos = party['chaos']
+    users = party['requests']
+    must_plays = party['mustPlays']
+    do_not_plays = party['doNotPlays']
 
     # Iterate through the 2D array and ensure each string begins with "spotify:track:"
     for user in users:
@@ -41,41 +59,34 @@ def generate_playlist():
             if not user[i].startswith("spotify:track:"):
                 user[i] = "spotify:track:" + user[i]
 
-    energy_curve = request.args.get('energy_curve')
-    energy_curve = json.loads(energy_curve)
     print('energy_curve:', energy_curve)
 
-    if request.args.get('must_plays') is not None:
-        must_plays = request.args.get('must_plays')
-        must_plays = json.loads(must_plays)
+    if must_plays is not None:
         # Iterate through the array and ensure each string begins with "spotify:track:"
         for i in range(len(must_plays)):
             if not must_plays[i].startswith("spotify:track:"):
                 must_plays[i] = "spotify:track:" + must_plays[i]
     else:
         must_plays = []
-    if request.args.get('do_not_plays') is not None:
-        do_not_plays = request.args.get('do_not_plays')
-        # do_not_plays = do_not_plays.replace("%27", "%22") # Replace single quotes with double quotes
-        do_not_plays = json.loads(do_not_plays)
+    if do_not_plays is not None:
         # Iterate through the array and ensure each string begins with "spotify:track:"
         for i in range(len(do_not_plays)):
             if not do_not_plays[i].startswith("spotify:track:"):
                 do_not_plays[i] = "spotify:track:" + do_not_plays[i]
     else:
         do_not_plays = []
-    if request.args.get('chaos') is not None:
-        NUM_RECOMMENDATIONS = int(request.args.get('chaos'))
-        CHOSEN_FEATURES_WEIGHT = 101-int(request.args.get('chaos'))
+    if chaos is not None:
+        NUM_RECOMMENDATIONS = int(chaos)
+        CHOSEN_FEATURES_WEIGHT = 101-int(chaos)
     else:
         NUM_RECOMMENDATIONS = 100
         CHOSEN_FEATURES_WEIGHT = 100
-    if request.args.get('artist_penalty') is not None:
-        ARTIST_PENALTY = int(request.args.get('artist_penalty'))
-    else:
-        ARTIST_PENALTY = 0.05
-    if request.args.get('num_songs_to_select') is not None:
-        NUM_SONGS_TO_SELECT = int(request.args.get('num_songs_to_select')) - len(must_plays)
+    # if request.args.get('artist_penalty') is not None:
+    #     ARTIST_PENALTY = int(request.args.get('artist_penalty'))
+    # else:
+    ARTIST_PENALTY = 0.05
+    if duration is not None:
+        NUM_SONGS_TO_SELECT = int(duration) - len(must_plays)
     else:
         NUM_SONGS_TO_SELECT = 30
 
