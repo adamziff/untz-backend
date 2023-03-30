@@ -86,7 +86,7 @@ def generate_playlist():
     # else:
     ARTIST_PENALTY = 0.05
     if duration is not None:
-        NUM_SONGS_TO_SELECT = int(duration) - len(must_plays)
+        NUM_SONGS_TO_SELECT = int(duration/3) - len(must_plays)
     else:
         NUM_SONGS_TO_SELECT = 30
 
