@@ -6,3 +6,4 @@ spotipy
 scipy
 scikit-learn
 python-dotenv
+pymongo
