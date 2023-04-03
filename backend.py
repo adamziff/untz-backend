@@ -23,7 +23,7 @@ def add_cors_headers(response):
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
         response.headers.add('Access-Control-Allow-Credentials', 'true')
-        # response.headers.add('Vary', 'Origin')
+        response.headers.add('Vary', 'Origin')
     return response
 
 @app.route('/api/data', methods=['GET'])
