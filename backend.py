@@ -114,18 +114,16 @@ def generate_playlist():
             response = make_response(jsonify(response_data), 200)
             response.headers['Content-Type'] = 'application/json'
             return response
-
         except Exception as e:
             print('e')
             print(e)
-            if hasattr(e, 'response') and hasattr(e.response, 'status_code') and e.response.status_code == 443:
+            # if hasattr(e, 'response') and hasattr(e.response, 'status_code') and e.response.status_code == 443:
+            if "Read timed out" in str(e):
                 # The Spotify API timed out, retrying...
                 print('The Spotify API timed out, retrying...')
+                print()
                 continue
             else:
-                print(e.port)
-                print(e.host)
-                print(e.response.port)
                 error_msg = f"An error occurred: {str(e)}"
                 response_data = {'error': error_msg}
                 response = make_response(jsonify(response_data), 500)
