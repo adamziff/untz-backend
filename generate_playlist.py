@@ -238,6 +238,9 @@ def get_utilfuncs_and_allsongs(users_uris, params):
         # get user's features
         w_end_index = w_start_index + params['NUM_RECOMMENDATIONS'] + (len(users_uris[i] * params['CHOSEN_FEATURES_WEIGHT']))
 
+        print('iloc 1')
+        print(all_weighted_features)
+        print()
         wf = all_weighted_features.iloc[w_start_index:w_end_index]
         
         w_start_index = w_end_index
@@ -293,6 +296,9 @@ def sort_by_energy(features, energy_curve, must_plays_features):
         end = start + songs_per_iter
         if i == len_energy-1:
             end += remainder
+        print('iloc 2')
+        print(sorted_features)
+        print()
         argsort_dict[argsort_energy[i]] = sorted_features.iloc[start:end]
 
     for i in range(len_energy):
@@ -354,6 +360,9 @@ def select_songs_sort(users_uris, energy_curve, params):
         # calculate sum of user utilities for every song in the set
         if selected_changed:
             # for every user, their current dist is the sum of all_dists[user][selected_ind]
+            print('iloc 3')
+            print(all_dists)
+            print()
             current_selected_song_dists = all_dists.iloc[selected_ind]
             current_user_dist_sums = np.sum(current_selected_song_dists, axis=0)
             current_maximin = max(current_user_dist_sums)
@@ -366,9 +375,15 @@ def select_songs_sort(users_uris, energy_curve, params):
         if new_song_ind == n:
             print('sort solved')
             break
+        print('iloc 4')
+        print(indices_sorted_by_min_dist)
+        print()
         while indices_sorted_by_min_dist[current_maximin_user].iloc[new_song_ind] in selected_ind and new_song_ind < n-1:
             new_song_ind += 1
 
+        print('iloc 5')
+        print(indices_sorted_by_min_dist)
+        print()
         new_selected_song = indices_sorted_by_min_dist[current_maximin_user].iloc[new_song_ind]
 
         # pick removed song: loop through all selected songs, try removing all until one improves the set
@@ -380,6 +395,9 @@ def select_songs_sort(users_uris, energy_curve, params):
             new_selected_ind[removed_selected] = new_selected_song
 
             # recalculate sum of user utilities
+            print('iloc 6')
+            print(all_dists)
+            print()
             new_selected_song_dists = all_dists.iloc[new_selected_ind]
             new_user_dist_sums = np.sum(new_selected_song_dists, axis=0)
             new_maximin = max(new_user_dist_sums)
@@ -407,6 +425,9 @@ def select_songs_sort(users_uris, energy_curve, params):
         t += 1
 
     print('songs selected, now sorting songs')
+    print('iloc 7')
+    print(all_features)
+    print()
     ordered_tracks = sort_by_energy(all_features.iloc[selected_ind], energy_curve, must_plays_features)
     print('sort finished')
 
