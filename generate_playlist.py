@@ -339,7 +339,7 @@ def select_songs_sort(users_uris, energy_curve, params):
     all_features = all_features[~do_not_plays_mask]
 
     all_dists = calculate_distances(avgs, all_features.drop(columns=['uri']))
-    indices_sorted_by_min_dist = np.argsort(all_dists, axis=0)
+    indices_sorted_by_min_dist = pd.DataFrame(np.argsort(all_dists, axis=0))
 
     n = len(all_features)
 
