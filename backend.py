@@ -6,25 +6,26 @@ from pymongo import MongoClient, errors as pymongo_errors
 import os
 
 app = Flask(__name__)
-cors_origins = ['www.untz.studio',
-                'https://www.untz.studio',
-                'https://untz-vivid.vercel.app',
-                'https://untz-vivid-adamziff.vercel.app', 
-                'http://localhost:3000']
-CORS(app, resources={r"/*": {"origins": cors_origins, "methods": ["GET", "POST", "OPTIONS"]}})
+CORS(app)
+# cors_origins = ['www.untz.studio',
+#                 'https://www.untz.studio',
+#                 'https://untz-vivid.vercel.app',
+#                 'https://untz-vivid-adamziff.vercel.app', 
+#                 'http://localhost:3000']
+# CORS(app, resources={r"/*": {"origins": cors_origins, "methods": ["GET", "POST", "OPTIONS"]}})
 
 mongodb_uri = os.environ.get('MONGODB_URI')
 
-@app.after_request
-def add_cors_headers(response):
-    origin = request.headers.get('Origin')
-    if origin in cors_origins:
-        response.headers.add('Access-Control-Allow-Origin', origin)
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        # response.headers.add('Vary', 'Origin')
-    return response
+# @app.after_request
+# def add_cors_headers(response):
+#     origin = request.headers.get('Origin')
+#     if origin in cors_origins:
+#         response.headers.add('Access-Control-Allow-Origin', origin)
+#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+#         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+#         response.headers.add('Access-Control-Allow-Credentials', 'true')
+#         # response.headers.add('Vary', 'Origin')
+#     return response
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
